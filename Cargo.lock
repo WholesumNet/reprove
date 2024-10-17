@@ -1804,17 +1804,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "recurse"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bincode",
- "clap",
- "risc0-zkvm",
- "tracing",
-]
-
-[[package]]
 name = "redox_syscall"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1862,6 +1851,17 @@ name = "regex-syntax"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a66a03ae7c801facd77a29370b4faec201768915ac14a721ba36f20bc9c209b"
+
+[[package]]
+name = "reprove"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bincode",
+ "clap",
+ "risc0-zkvm",
+ "tracing",
+]
 
 [[package]]
 name = "reqwest"

@@ -4,6 +4,7 @@ use risc0_zkvm::{
     Asset, AssetRequest,
     SuccinctReceipt, 
     Receipt, ReceiptClaim,
+    // VerifierContext, SuccinctReceiptVerifierParameters,
 };
 use std::{
     fs,
@@ -99,12 +100,11 @@ fn prove_and_lift(
     out_sr_path: PathBuf,
 ) -> anyhow::Result<SuccinctReceipt<ReceiptClaim>> {
     let r0_client = ApiClient::from_env()?;
-    let prover_opts = ProverOpts::default();
     // fisrt prove
     let mut now = Instant::now();
     let segment_receipt = r0_client
         .prove_segment(
-            &prover_opts,
+            &ProverOpts::succinct(),
             Asset::Path(in_seg_path),
             AssetRequest::Inline,
     )?; 
@@ -114,12 +114,13 @@ fn prove_and_lift(
     now = Instant::now();
     let succinct_receipt = r0_client
         .lift(
-            &prover_opts,
+            &ProverOpts::succinct(),
             Asset::Inline(asset),
             AssetRequest::Inline
         )?;
     let lift_dur = now.elapsed().as_secs();
     println!("prove took `{} secs`, and lift `{} secs`.", prove_dur, lift_dur);
+    let _ = succinct_receipt.verify_integrity()?;
     let _ = fs::write(
         &out_sr_path,
         bincode::serialize(&succinct_receipt)?
@@ -133,16 +134,15 @@ fn join(
     out_sr_path: PathBuf,
 ) -> anyhow::Result<SuccinctReceipt<ReceiptClaim>> {
     let r0_client = ApiClient::from_env()?;
-    let prover_opts = ProverOpts::default();
-
     let now = Instant::now();
     let succinct_receipt = r0_client
         .join(
-            &prover_opts,
+            &ProverOpts::succinct(),
             Asset::Path(left_sr_path),
             Asset::Path(right_sr_path),
             AssetRequest::Inline,
         )?;
+    let _ = succinct_receipt.verify_integrity()?;
     let dur = now.elapsed().as_secs();
     println!("join took `{dur} secs`");
     let _ = fs::write(
@@ -157,23 +157,23 @@ fn to_snark(
     out_receipt_path: PathBuf,
 ) -> anyhow::Result<Receipt> {
     let r0_client = ApiClient::from_env()?;
-    let prover_opts = ProverOpts::default();
     // fist transform via identity_p254
     let now = Instant::now();
     let succinct_receipt = r0_client
         .identity_p254(
-            &prover_opts,
+            &ProverOpts::groth16(),
             Asset::Path(in_sr_path),
             AssetRequest::Inline,
         )?;
     let dur = now.elapsed().as_secs();
     println!("identity_p254 took `{dur} secs`");
+    let _ = succinct_receipt.verify_integrity()?;
     // and then extract the compressed snark(Groth16)
     let asset = Asset::try_from(succinct_receipt)?.as_bytes()?;
     let now = Instant::now();
     let receipt = r0_client
         .compress(
-            &prover_opts,
+            &ProverOpts::groth16(),
             Asset::Inline(asset),
             AssetRequest::Inline,
         )?;
@@ -183,6 +183,6 @@ fn to_snark(
         &out_receipt_path,
         bincode::serialize(&receipt)?
     );
-    println!("your Groth16 receipt is ready!");
+    println!("your Groth16 receipt is ready!`");
     Ok(receipt)
 }
