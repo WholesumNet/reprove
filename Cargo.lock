@@ -1859,6 +1859,9 @@ dependencies = [
  "anyhow",
  "bincode",
  "clap",
+ "rand",
+ "risc0-circuit-recursion",
+ "risc0-zkp",
  "risc0-zkvm",
  "tracing",
 ]
